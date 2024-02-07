@@ -118,7 +118,7 @@ public class Hangman {
 
         System.out.print("Welcome to the hangman game: ");
 
-        while (errorCount <= 7) {
+        while (errorCount < 7) {
 
             System.out.printf("%n%n%s  %n%nHidden word is: %s ", hangmanImage(errorCount), hiddenWord.toString().toUpperCase());
             System.out.printf("%nErrors [%d]: %s ", errorCount, errorLetters);
@@ -128,7 +128,7 @@ public class Hangman {
                 break;
             }
 
-            if (errorCount == 7) {
+            if (errorCount == 6) {
                 System.out.println("\n" + "You are LOOSE!");
                 break;
             }
