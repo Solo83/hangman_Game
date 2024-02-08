@@ -8,7 +8,7 @@ public class Hangman {
         String str = null;
         while (str == null) {
 
-            try (RandomAccessFile rcf = new RandomAccessFile(f, "r");) {
+            try (RandomAccessFile rcf = new RandomAccessFile(f, "r")) {
                 long rand = (long) (new Random().nextDouble() * f.length());
                 rcf.seek(rand);
                 rcf.readLine();
@@ -144,7 +144,7 @@ public class Hangman {
 
             System.out.printf("%nEnter letter: ");
 
-            char letter = Character.toLowerCase(scanner.next().charAt(0));;
+            char letter = Character.toLowerCase(scanner.next().charAt(0));
 
             while(!russianCharsetChecker(letter)) {
                 System.out.println("Enter only Russian Letters!");
