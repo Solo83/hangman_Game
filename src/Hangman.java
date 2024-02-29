@@ -1,37 +1,52 @@
 import java.io.*;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.regex.Pattern;
 
 public class Hangman {
-    private static String getRandomLineFromFile() {
-        File f = new File("src/resources/dictionary.txt");
-        String str = null;
-        while (str == null) {
+    final int MAXIMUM_ERRORS = 6;
+    final File dictionary = new File("src/resources/dictionary.txt");
+    Scanner scanner = new Scanner(System.in);
+    public static void main(String[] args) {
+        new Hangman().playTheGame();
+    }
 
-            try (RandomAccessFile rcf = new RandomAccessFile(f, "r")) {
-                long rand = (long) (new Random().nextDouble() * f.length());
-                rcf.seek(rand);
-                rcf.readLine();
-                str = new String(rcf.readLine().getBytes(StandardCharsets.ISO_8859_1), StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                System.out.println("Something went wrong.");
+    private String getRandomLineFromFile(File f)
+    {
+        String result = null;
+        Random rand = new Random();
+        int n = 0;
+        try {
+            for(Scanner sc = new Scanner(f); sc.hasNext(); )
+            {
+                ++n;
+                String line = sc.nextLine();
+                if(rand.nextInt(n) == 0)
+                    result = line;
             }
+        } catch (FileNotFoundException e) {
+            System.out.println("Something went wrong.");
         }
-
-        return str;
+        return result;
     }
 
-    private static String getRandomWordFromLine() {
-        String line = getRandomLineFromFile();
+    private String getRandomWordFromLine() {
+        String line = null;
+        while (line == null) {
+        line = getRandomLineFromFile(dictionary);}
         String[] wordsFromLine = line.split("\\s+");
-        return Arrays.asList(wordsFromLine).get(new Random().nextInt(wordsFromLine.length));
+        int index = (new Random()).nextInt(wordsFromLine.length-1);
+        return wordsFromLine[index];
     }
 
-    private static boolean russianCharsetChecker(char letter) {
-         return Character.UnicodeBlock.of(letter).equals(Character.UnicodeBlock.CYRILLIC);
+    private boolean isCorrectCyrillicInput(String input) {
+        return input.length()==1 && Pattern.matches(".*\\p{InCyrillic}.*", input);
     }
 
-    private static String hangmanImage(int errorCounter) {
+    private boolean isCorrectLatinInput(String input) {
+        return input.length()==1 && Pattern.matches("[yn]", input);
+    }
+
+    private String hangmanImage(int errorCounter) {
         String s = "";
         switch (errorCounter) {
             case 0 ->
@@ -116,44 +131,43 @@ public class Hangman {
         return s;
     }
 
-    private static void gameLogic() {
+    private void gameLogic() {
 
         String randomWord = getRandomWordFromLine().toLowerCase();
         StringBuilder hiddenWord = new StringBuilder("_".repeat(randomWord.length()).toLowerCase());
         List<Character> errorLetters = new ArrayList<>();
         List<Character> enteredLetters = new ArrayList<>();
         int errorCount = 0;
-        Scanner scanner = new Scanner(System.in);
 
-        System.out.print("Welcome to the hangman game: ");
+        System.out.print("Welcome to the Hangman game: ");
 
-        while (errorCount < 7) {
+        while (true) {
 
             System.out.printf("%n%n%s  %n%nHidden word is: %s ", hangmanImage(errorCount), hiddenWord.toString().toUpperCase());
             System.out.printf("%nErrors [%d]: %s ", errorCount, errorLetters);
 
             if (randomWord.contentEquals(hiddenWord)) {
-                System.out.println("\n" + "You are WIN!");
+                System.out.println("\nYou are WIN!");
                 break;
             }
 
-            if (errorCount == 6) {
-                System.out.println("\n" + "You are LOOSE!");
+            if (errorCount == MAXIMUM_ERRORS) {
+                System.out.println("\nYou are LOOSE! Guessed word is " + randomWord.toUpperCase());
                 break;
             }
 
-            System.out.printf("%nEnter letter: ");
+            System.out.print("\nEnter letter: ");
+            String input = scanner.nextLine();
 
-            char letter = Character.toLowerCase(scanner.next().charAt(0));
-
-            while(!russianCharsetChecker(letter)) {
-                System.out.println("Enter only Russian Letters!");
-                letter = Character.toLowerCase(scanner.next().charAt(0));
+            while (!isCorrectCyrillicInput(input)){
+                System.out.print("Enter only one cyrillic letter: ");
+                input = scanner.nextLine();
             }
 
+            char letter = input.toLowerCase().charAt(0);
 
             if (enteredLetters.contains(letter)) {
-                System.out.printf("%nThis Letter has been already entered, try again! ");
+                System.out.printf("Letter \"%s\" has been already entered, enter another! ",letter);
                 continue;
             }
 
@@ -174,30 +188,28 @@ public class Hangman {
                 enteredLetters.add(letter);
             }
         }
-
     }
 
-    public static void playTheGame() {
-        boolean game = true;
-        System.out.println("Do you wanna play the Game? y/n ");
+    public void playTheGame() {
+        boolean isGame = true;
+        System.out.print("Do you want to play the Game? (y/n): ");
+        Scanner scanner = new Scanner(System.in);
 
-        while (game) {
-            String choose = String.valueOf(new Scanner(System.in).next().charAt(0)).toLowerCase();
-            switch (choose) {
+        while (isGame) {
+            String input = scanner.nextLine().toLowerCase();
+            while (!isCorrectLatinInput(input)){
+                System.out.print("Enter only \"y\" or \"n\" : ");
+                input = scanner.nextLine().toLowerCase();
+            }
+
+            switch (input) {
                 case "n" ->
-                        game = false;
+                        isGame = false;
                 case "y" -> {
                     gameLogic();
-                    System.out.println();
-                    System.out.println("Do you wanna play again? y/n ");
+                    System.out.print("Do you want to play again? (y/n): ");
                 }
             }
         }
-    }
-
-    public static void main(String[] args) {
-
-        playTheGame();
-
     }
 }
